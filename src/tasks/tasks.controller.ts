@@ -11,7 +11,7 @@ import {
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
 import { UpdateTaskStatusDto } from './dto/update-tast-status.dto';
-import { Task } from './task.model';
+import { Task } from './task.entity';
 import { TasksService } from './tasks.service';
 
 @Controller('tasks')
@@ -21,16 +21,12 @@ export class TasksController {
     // Empty query binds the underlying query parameters object, so we don't have to explicitly
     // request with ?filterDto=...
     @Get()
-    getTasks(@Query() filterDto: GetTasksFilterDto): Task[] {
-        if (Object.keys(filterDto).length) {
-            return this.tasksService.getFiltered(filterDto);
-        }
-        console.log('all');
-        return this.tasksService.getAll();
+    getTasks(@Query() filterDto: GetTasksFilterDto): Promise<Task[]> {
+        return this.tasksService.getTasks(filterDto);
     }
 
     @Get(':id')
-    getById(@Param('id') id: string): Task {
+    getById(@Param('id') id: string): Promise<Task> {
         return this.tasksService.getById(id);
     }
 
@@ -38,17 +34,20 @@ export class TasksController {
     updateStatus(
         @Param('id') id: string,
         @Body() dto: UpdateTaskStatusDto,
-    ): Task {
+    ): Promise<Task> {
         return this.tasksService.updateStatus(id, dto.status);
     }
 
     @Delete(':id')
-    deleteById(@Param('id') id: string): Task {
-        return this.tasksService.deleteById(id);
+    async deleteById(@Param('id') id: string): Promise<Record<string, any>> {
+        await this.tasksService.deleteById(id);
+        return {
+            success: true,
+        };
     }
 
     @Post()
-    create(@Body() dto: CreateTaskDto): Task {
+    create(@Body() dto: CreateTaskDto): Promise<Task> {
         return this.tasksService.create(dto);
     }
 }
